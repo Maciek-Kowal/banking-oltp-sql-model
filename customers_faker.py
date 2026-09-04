@@ -15,7 +15,7 @@ fakers = {
 dane_do_bazy = []
 liczba_rekordow = 1000
 
-print("Generowanie danych klientów...")
+print("Generowanie danych klientów")
 
 for _ in range(liczba_rekordow):
     kraj = random.choice(list(fakers.keys()))
@@ -101,8 +101,29 @@ polaczenie = (f"DRIVER={sterownik};"
 
 try:
     connection = pyodbc.connect(polaczenie)
-    print("dziala")
+    cursor = connection.cursor()
+    cursor.fast_executemany = True
+    sql_insert = """
+        INSERT INTO customers (
+            parent_company_id, customer_type, first_name, middle_name, last_name, 
+            national_id, birth_date, company_name, tax_id, country, 
+            state_province, county, municipality, city, postal_code, 
+            street, house_number, apartment_number, phone_number, email
+        ) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+
+    print("Wysyłanie danych do bazy")
+    cursor.executemany(sql_insert, dane_do_bazy)
+    connection.commit()
+    print("Dane załadowane pomyślnie")
 except Exception as ex:
-    print (f'blad! {ex}')
+    print(f'Błąd!: {ex}')
     sys.exit(1)
+finally:
+    if 'cursor' in locals():
+        cursor.close()
+    if 'connection' in locals():
+        connection.close()
+
 
